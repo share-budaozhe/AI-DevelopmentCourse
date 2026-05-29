@@ -1,0 +1,39 @@
+﻿{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build 构建知识库",
+            "type": "shell",
+            "command": "python",
+            "args": ["main.py", "build"],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {"PYTHONIOENCODING": "utf-8"}
+            },
+            "group": {"kind": "build", "isDefault": true},
+            "problemMatcher": []
+        },
+        {
+            "label": "Info 查看状态",
+            "type": "shell",
+            "command": "python",
+            "args": ["main.py", "info"],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {"PYTHONIOENCODING": "utf-8"}
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Clear 清空知识库",
+            "type": "shell",
+            "command": "python",
+            "args": ["main.py", "clear"],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {"PYTHONIOENCODING": "utf-8"}
+            },
+            "problemMatcher": []
+        }
+    ]
+}
