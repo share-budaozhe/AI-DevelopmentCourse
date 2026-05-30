@@ -1,0 +1,19 @@
+Python 实用技巧
+
+列表推导式（List Comprehension）
+列表推导式是 Python 中创建列表的简洁方式。语法为 [expression for item in iterable if condition]。
+
+生成器（Generator）
+生成器是一种惰性求值的迭代器，使用 yield 关键字。适合处理大数据流。
+
+上下文管理器（Context Manager）
+使用 with 语句可以自动管理资源（如文件、锁）。
+
+装饰器（Decorator）
+装饰器是一个接收函数并返回新函数的可调用对象。用于日志、计时、权限检查等。
+
+类型提示（Type Hints）
+Python 3.5+ 支持类型提示，配合 mypy 做静态分析。
+
+异步编程（Async/Await）
+使用 asyncio 支持异步编程，适合 I/O 密集型任务。

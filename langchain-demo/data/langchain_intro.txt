@@ -1,0 +1,17 @@
+LangChain 简介
+
+LangChain 是一个用于构建基于大语言模型（LLM）应用的框架。它提供了一套标准化的组件和接口，
+帮助开发者将 LLM 与其他工具、数据源和计算资源连接起来。
+
+核心概念：
+1. Model I/O — 与语言模型交互：Prompt 模板、Chat Model、Output Parser
+2. Retrieval — 检索增强生成（RAG）：Document Loader、Text Splitter、Embedding、Vector Store、Retriever
+3. Chains — 将多个组件串联成可执行的流程，支持 LCEL（LangChain Expression Language）
+4. Agents — 让 LLM 自主决定调用哪些工具、以什么顺序执行
+5. Memory — 在多次调用之间保持状态和上下文
+
+RAG 是将检索系统与 LLM 结合的技术。它的核心思想是：先检索相关文档，再将文档内容作为
+上下文注入 Prompt，让 LLM 基于这些真实内容生成回答，从而减少幻觉、提升准确性。
+
+Embedding 是将文本转换为高维向量，语义相近的文本向量距离也更近。
+常用的 Embedding 模型包括 OpenAI 的 text-embedding-3-small 等。
