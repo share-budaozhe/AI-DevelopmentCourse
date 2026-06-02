@@ -1,0 +1,27 @@
+{
+  "name": "mcp-demo",
+  "version": "1.0.0",
+  "description": "MCP协议学习Demo —— stdio / SSE / Stream 三种传输模式",
+  "type": "module",
+  "scripts": {
+    "dev:stdio-server": "tsx src/stdio/server.ts",
+    "dev:stdio-client": "tsx src/stdio/client.ts",
+    "dev:sse-server": "tsx src/sse/server.ts",
+    "dev:sse-client": "tsx src/sse/client.ts",
+    "dev:stream-server": "tsx src/stream/server.ts",
+    "dev:stream-client": "tsx src/stream/client.ts"
+  },
+  "keywords": ["mcp", "model-context-protocol", "demo"],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "express": "^5.0.0",
+    "zod": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}

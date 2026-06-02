@@ -1,0 +1,28 @@
+﻿[project]
+name = "mcp-demo"
+version = "1.0.0"
+description = "MCP 协议学习 Demo — stdio / SSE / Stream 三种传输模式"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+dependencies = [
+    "mcp>=1.0",
+    "starlette>=0.40",
+    "uvicorn>=0.30",
+    "sse-starlette>=2.0",
+    "httpx>=0.27",
+]
+
+[project.scripts]
+dev-stdio-server = "src.stdio.server:main"
+dev-stdio-client = "src.stdio.client:main"
+dev-sse-server = "src.sse.server:main"
+dev-sse-client = "src.sse.client:main"
+dev-stream-server = "src.stream.server:main"
+dev-stream-client = "src.stream.client:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
