@@ -31,6 +31,7 @@ async def main():
         async with streamablehttp_client(f"{STREAM_SERVER_URL}/mcp") as (
             read_stream,
             write_stream,
+            _,  # get_session_id
         ):
             # 2. 创建 MCP Client Session
             async with ClientSession(read_stream, write_stream) as client:
@@ -62,11 +63,17 @@ async def main():
                     print(f"结果: {content.text}")
 
         print("\n✓ 已关闭连接")
+
     except Exception as error:
+        import traceback
         msg = str(error)
         print(f"✗ 错误: {msg}")
-        if "ConnectionRefusedError" in msg:
-            print("\n提示：请先启动 Stream 服务端：uv run src/stream/server.py")
+        # 若是 ExceptionGroup，展开子异常
+        if hasattr(error, 'exceptions'):
+            for sub in error.exceptions:  # type: ignore[attr-defined]
+                print(f"  子异常: {sub}")
+        if "ConnectionRefusedError" in msg or "connect" in msg.lower():
+            print("\n提示：请先启动 Stream 服务端：python -m src.stream.server")
         raise SystemExit(1)
 
 

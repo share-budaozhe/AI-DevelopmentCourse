@@ -38,6 +38,9 @@ from mcp.server.models import InitializationOptions
 from mcp.server.stdio import stdio_server
 import mcp.types as types
 
+import os, sys
+sys.path.insert(0, str(__import__('pathlib').Path(__file__).resolve().parent.parent))
+
 from common.tools import DEMO_TOOLS, dispatch_tool
 
 # 日志输出到 stderr，避免污染 stdout 上的 JSON-RPC 通信

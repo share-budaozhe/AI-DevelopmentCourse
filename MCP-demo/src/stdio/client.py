@@ -26,12 +26,13 @@ async def main():
     print("=" * 50)
     print()
 
-    # 1. 创建 stdio transport —— 指定服务端启动命令
+    # 1. 创建 StdioServerParameters —— 指定服务端启动命令
     #    transport 内部会执行: python src/stdio/server.py
-    server_params = {
-        "command": "python",
-        "args": [SERVER_SCRIPT],
-    }
+    from mcp import StdioServerParameters
+    server_params = StdioServerParameters(
+        command="python",
+        args=[SERVER_SCRIPT],
+    )
 
     try:
         # 2. 建立连接（启动子进程 + MCP 握手）

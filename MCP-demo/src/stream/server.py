@@ -47,6 +47,9 @@ from mcp.server.models import InitializationOptions
 from mcp.server.streamable_http import StreamableHTTPServerTransport
 import mcp.types as types
 
+import sys
+sys.path.insert(0, str(__import__('pathlib').Path(__file__).resolve().parent.parent))
+
 from common.tools import DEMO_TOOLS, dispatch_tool
 
 logging.basicConfig(level=logging.INFO)
@@ -54,49 +57,69 @@ logger = logging.getLogger("stream-server")
 
 
 # ---------- POST /mcp —— 唯一的 MCP 通信端点 ----------
+
+# Transport 必须在模块级别创建并复用，不能每个请求新建。
+transport = StreamableHTTPServerTransport(mcp_session_id=None)
+
+server = Server("mcp-demo-stream-server")
+
+
+@server.list_tools()
+async def handle_list_tools() -> types.ListToolsResult:
+    logger.info("[stream-server] tools/list 被调用")
+    return types.ListToolsResult(tools=DEMO_TOOLS)
+
+
+@server.call_tool()
+async def handle_call_tool(
+    name: str, arguments: dict | None
+) -> list[types.TextContent]:
+    logger.info(f"[stream-server] tools/call: {name}({arguments})")
+    try:
+        return dispatch_tool(name, arguments or {})
+    except Exception as error:
+        msg = str(error)
+        return [types.TextContent(type="text", text=f"错误: {msg}")]
+
+
 async def handle_mcp(request: Request):
-    """POST /mcp —— 处理所有 JSON-RPC 通信"""
-    body = await request.json()
+    """POST /mcp —— 将 HTTP 请求桥接到 MCP transport"""
+    await transport.handle_request(request.scope, request.receive, request._send)
 
-    # 1. 为每个请求创建独立的 Server + Transport
-    #    Streamable HTTP 是无状态的，不需要跨请求共享 transport
-    server = Server("mcp-demo-stream-server")
 
-    # 2. 注册工具处理器
-    @server.list_tools()
-    async def handle_list_tools() -> types.ListToolsResult:
-        logger.info("[stream-server] tools/list 被调用")
-        return types.ListToolsResult(tools=DEMO_TOOLS)
+# ---------- 生命周期：保持 connect() 跨越整个服务运行期 ----------
+from contextlib import asynccontextmanager
 
-    @server.call_tool()
-    async def handle_call_tool(
-        name: str, arguments: dict | None
-    ) -> list[types.TextContent]:
-        logger.info(f"[stream-server] tools/call: {name}({arguments})")
-        try:
-            return dispatch_tool(name, arguments or {})
-        except Exception as error:
-            msg = str(error)
-            return [types.TextContent(type="text", text=f"错误: {msg}")]
 
-    # 3. 创建 StreamableHTTP transport（无状态模式，不需要 sessionId 生成器）
-    transport = StreamableHTTPServerTransport()
+@asynccontextmanager
+async def lifespan(app):
+    """服务启动时连接 transport，关闭时清理"""
+    import asyncio
 
-    # 4. 连接并处理请求
     async with transport.connect() as (read_stream, write_stream):
-        await server.run(
-            read_stream,
-            write_stream,
-            InitializationOptions(
-                server_name="mcp-demo-stream-server",
-                server_version="1.0.0",
-                capabilities=server.get_capabilities(
-                    notification_options=NotificationOptions(),
-                    experimental_capabilities={},
+        server_task = asyncio.create_task(
+            server.run(
+                read_stream,
+                write_stream,
+                InitializationOptions(
+                    server_name="mcp-demo-stream-server",
+                    server_version="1.0.0",
+                    capabilities=server.get_capabilities(
+                        notification_options=NotificationOptions(),
+                        experimental_capabilities={},
+                    ),
                 ),
-            ),
+            )
         )
-
+        logger.info("[stream-server] Transport 已连接，server 后台运行中")
+        try:
+            yield
+        finally:
+            server_task.cancel()
+            try:
+                await server_task
+            except asyncio.CancelledError:
+                pass
 
 # ---------- 健康检查 ----------
 async def health_check(request: Request):
@@ -109,12 +132,12 @@ async def health_check(request: Request):
 
 # ---------- Starlette 应用 ----------
 app = Starlette(
+    lifespan=lifespan,
     routes=[
         Route("/mcp", endpoint=handle_mcp, methods=["POST"]),
         Route("/health", endpoint=health_check, methods=["GET"]),
     ]
 )
-
 
 # ---------- 启动 ----------
 def main():

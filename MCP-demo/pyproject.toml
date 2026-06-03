@@ -1,4 +1,4 @@
-﻿[project]
+[project]
 name = "mcp-demo"
 version = "1.0.0"
 description = "MCP 协议学习 Demo — stdio / SSE / Stream 三种传输模式"

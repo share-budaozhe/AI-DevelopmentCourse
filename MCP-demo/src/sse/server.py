@@ -44,6 +44,9 @@ from mcp.server.models import InitializationOptions
 from mcp.server.sse import SseServerTransport
 import mcp.types as types
 
+import sys
+sys.path.insert(0, str(__import__('pathlib').Path(__file__).resolve().parent.parent))
+
 from common.tools import DEMO_TOOLS, dispatch_tool
 
 logging.basicConfig(level=logging.INFO)

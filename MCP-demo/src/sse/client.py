@@ -61,11 +61,16 @@ async def main():
                     print(f"结果: {content.text}")
 
         print("\n✓ 已关闭连接")
+
     except Exception as error:
+        import traceback
         msg = str(error)
         print(f"✗ 错误: {msg}")
-        if "ConnectionRefusedError" in msg:
-            print("\n提示：请先启动 SSE 服务端：uv run python src/sse/server.py")
+        if hasattr(error, 'exceptions'):
+            for sub in error.exceptions:  # type: ignore[attr-defined]
+                print(f"  子异常: {sub}")
+        if "ConnectionRefusedError" in msg or "connect" in msg.lower():
+            print("\n提示：请先启动 SSE 服务端：python -m src.sse.server")
         raise SystemExit(1)
 
 

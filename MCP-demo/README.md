@@ -39,6 +39,7 @@ docs/
 ├── stream-mode.md        # Streamable HTTP 模式详解
 ├── knowledge-points.md   # 30 个知识点汇总
 ├── questions.md          # 18 个启发性问题
+├── testing.md           # 测试与试运行指南（Codex 集成）
 └── answers.md            # 问题参考答案
 ```
 
@@ -57,3 +58,7 @@ Demo 提供了三个示例工具，所有模式共享相同的工具实现：
 - Express (SSE/Stream 服务端)
 - Zod (Schema 验证)
 - tsx (TypeScript 执行)
+
+## 测试指南
+
+详细的本地部署、Codex 集成测试步骤请参阅：[docs/testing.md](docs/testing.md)
