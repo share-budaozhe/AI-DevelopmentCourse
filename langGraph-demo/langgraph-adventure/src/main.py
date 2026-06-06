@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/env python3
 """
 ═══════════════════════════════════════════════════════════════
-  🏰 AI 地牢探险 — main.py （游戏入口）
+  ?? AI 地牢探险 — main.py （游戏入口）
   LangGraph Demo：用状态图驱动的文字冒险游戏
 ═══════════════════════════════════════════════════════════════
 
@@ -26,11 +26,14 @@
 from __future__ import annotations
 
 import sys
+
+# Ensure terminal can output emoji/Unicode
+sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 import os
 import uuid
 
 # 确保 src 目录在路径中
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from langgraph.types import Command
 
@@ -68,13 +71,13 @@ def print_message(msg) -> None:
         if msg.type == "ai":
             print(msg.content)
         elif msg.type == "human":
-            print(f"\n🧑 冒险者: {msg.content}")
+            print(f"\n?? 冒险者: {msg.content}")
     elif isinstance(msg, tuple):
         role, content = msg[0], msg[1]
         if role == "ai":
             print(content)
         elif role == "user":
-            print(f"\n🧑 冒险者: {content}")
+            print(f"\n?? 冒险者: {content}")
 
 
 def print_banner() -> None:
@@ -82,14 +85,14 @@ def print_banner() -> None:
     banner = """
 ╔══════════════════════════════════════════════════════╗
 ║                                                      ║
-║   🏰  AI 地牢探险 · Dragon's Lair                   ║
+║   ??  AI 地牢探险 · Dragon's Lair                   ║
 ║                                                      ║
 ║   一个由 LangGraph 状态图驱动的交互式文字冒险        ║
 ║                                                      ║
 ║   在这座古老的地牢中，你将面对：                    ║
-║     👹 地精守卫                                     ║
-║     💀 骷髅骑士                                     ║
-║     🐉 远古火龙                                     ║
+║     ?? 地精守卫                                     ║
+║     ?? 骷髅骑士                                     ║
+║     ?? 远古火龙                                     ║
 ║                                                      ║
 ║   你的目标：击败火龙，逃出生天！                    ║
 ║                                                      ║
@@ -101,7 +104,7 @@ def print_banner() -> None:
 def print_help() -> None:
     """打印帮助信息。"""
     help_text = """
-🎮 可用命令：
+?? 可用命令：
   ┌──────────────────────────────────────────────────┐
   │ 移动    │ 北 / 南 / 东 / 西                      │
   │         │ n / s / e / w                          │
@@ -127,7 +130,7 @@ def print_help() -> None:
 # ═══════════════════════════════════════════════════════════════
 
 def run_game() -> None:
-    """🏰 游戏主循环 —— 展示 LangGraph 的人机交互模式。
+    """?? 游戏主循环 —— 展示 LangGraph 的人机交互模式。
 
     流程：
     1. 初始化图
@@ -166,20 +169,20 @@ def run_game() -> None:
     while True:
         # 检查游戏是否结束
         if current_state.get("game_over", False):
-            print("\n🌟 感谢游玩！再见，冒险者。")
+            print("\n?? 感谢游玩！再见，冒险者。")
             break
 
         # 获取玩家输入
         try:
-            user_input = input("\n🎯 你想做什么？> ").strip()
+            user_input = input("\n?? 你想做什么？> ").strip()
         except (EOFError, KeyboardInterrupt):
-            print("\n\n👋 冒险中断，再见！")
+            print("\n\n?? 冒险中断，再见！")
             break
 
         # 处理系统命令
         cmd = user_input.lower()
         if cmd in ("退出", "quit", "exit", "q"):
-            print("👋 再见，冒险者！")
+            print("?? 再见，冒险者！")
             break
         elif cmd in ("帮助", "help", "?"):
             print_help()
@@ -187,14 +190,14 @@ def run_game() -> None:
         elif cmd in ("背包", "inventory", "i", "inv"):
             inv = current_state.get("inventory", [])
             if inv:
-                print("🎒 你的背包:")
+                print("?? 你的背包:")
                 for name in inv:
                     from adventure_data import get_item
                     item = get_item(name)
                     if item:
                         print(f"  {item.emoji} {name} — {item.description}")
             else:
-                print("🎒 背包空空如也。")
+                print("?? 背包空空如也。")
             continue
         elif cmd in ("状态", "status"):
             hp = current_state.get("player_hp", 0)
@@ -204,9 +207,9 @@ def run_game() -> None:
             from adventure_data import get_room
             room = get_room(room_id)
             room_name = room.name if room else "未知"
-            print(f"  ❤️  生命: {hp}/{max_hp}")
-            print(f"  ⚔️  攻击: {atk}")
-            print(f"  📍 位置: {room_name}")
+            print(f"  ??  生命: {hp}/{max_hp}")
+            print(f"  ??  攻击: {atk}")
+            print(f"  ?? 位置: {room_name}")
             continue
 
         # ── 恢复图执行：传递用户输入 ──
@@ -216,7 +219,7 @@ def run_game() -> None:
                 config,
             )
         except Exception as e:
-            print(f"⚠️ 出了点问题: {e}")
+            print(f"?? 出了点问题: {e}")
             continue
 
         # 显示新增的消息

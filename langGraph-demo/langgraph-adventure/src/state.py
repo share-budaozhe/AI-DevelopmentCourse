@@ -2,7 +2,7 @@
 #  🏰 AI 地牢探险 — src/state.py
 #   LangGraph 核心：状态定义 (TypedDict + Annotated)
 # ─────────────────────────────────────────────────────────────
-\"\"\"
+"""
 ═══════════════════════════════════════════════════════════════
   学习要点：LangGraph 的 State（状态管理）
 ═══════════════════════════════════════════════════════════════
@@ -15,16 +15,18 @@ LangGraph 用 TypedDict 定义图的状态。状态是图
 2. Annotated — 定义 reducer（合并策略）
 3. add_messages — 内置的 messages reducer（追加而非覆盖）
 4. 普通字段 — 默认覆盖策略（用新值替换旧值）
-\"\"\"
+"""
 from __future__ import annotations
 
 from typing import Annotated, List, Optional, TypedDict
+
+from operator import or_
 
 from langgraph.graph.message import add_messages
 
 
 class GameState(TypedDict, total=False):
-    \"\"\"
+    """
     🎮 游戏全局状态 —— LangGraph 状态定义
     
     这个 TypedDict 定义了整个游戏图的状态结构。
@@ -46,7 +48,7 @@ class GameState(TypedDict, total=False):
     │ game_won            │ 是否胜利                          │
     │ pending_decision    │ 等待玩家决策的标志                │
     └─────────────────────┴──────────────────────────────────┘
-    \"\"\"
+    """
     # ═══════════════════════════════════════════════════════
     # messages 使用 add_messages reducer：
     # 这是 LangGraph 的内置合并策略——新消息会追加到列表，
@@ -70,4 +72,4 @@ class GameState(TypedDict, total=False):
     solved_puzzles: List[str]
     game_over: bool
     game_won: bool
-    pending_decision: bool
+    pending_decision: Annotated[bool, or_]
