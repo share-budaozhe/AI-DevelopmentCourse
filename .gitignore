@@ -1,0 +1,18 @@
+﻿# Node
+*.log
+*.log.*
+node_modules
+
+out/
+dist/
+code.js
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# OS
+.DS_Store
+Thumbs.db

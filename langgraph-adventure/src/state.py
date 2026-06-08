@@ -18,9 +18,8 @@ LangGraph 用 TypedDict 定义图的状态。状态是图
 """
 from __future__ import annotations
 
+import operator
 from typing import Annotated, List, Optional, TypedDict
-
-from operator import or_
 
 from langgraph.graph.message import add_messages
 
@@ -72,4 +71,4 @@ class GameState(TypedDict, total=False):
     solved_puzzles: List[str]
     game_over: bool
     game_won: bool
-    pending_decision: Annotated[bool, or_]
+    pending_decision: Annotated[bool, operator.or_]
