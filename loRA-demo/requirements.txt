@@ -1,0 +1,33 @@
+# LoRA Fine-tuning Demo Dependencies
+# 安装: pip install -r requirements.txt
+
+# 核心
+torch>=2.0.0
+transformers>=4.30.0
+peft>=0.5.0
+datasets>=2.10.0
+accelerate>=0.20.0
+
+# 量化训练（可选，用于 4bit/8bit）
+bitsandbytes>=0.40.0
+
+# 评估
+rouge-score
+bert-score
+nltk
+
+# 实验跟踪
+wandb
+tensorboard
+
+# 部署
+vllm>=0.4.0
+fastapi
+uvicorn
+
+# 压测
+locust
+
+# 测试
+pytest
+pytest-cov
