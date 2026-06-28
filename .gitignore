@@ -13,6 +13,22 @@ __pycache__/
 .venv/
 .env
 
+# LoRA / Model outputs (large files)
+lora_output/
+merged_model/
+*.gguf
+*.safetensors
+
+# IDE
+.opencode/
+
 # OS
 .DS_Store
 Thumbs.db
+
+# Archives
+*.rar
+*.zip
+
+# Images/Assets (not tracked)
+图片/

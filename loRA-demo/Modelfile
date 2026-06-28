@@ -1,0 +1,20 @@
+# ── Ollama Modelfile: LoRA 微调后的 Qwen2.5-0.5B 模型 ──
+FROM ./merged_model
+
+# Qwen2.5 聊天模板（IMSTART/IMEND 格式）
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}<|im_start|>user
+{{ .Prompt }}<|im_end|>
+<|im_start|>assistant
+"""
+
+# 停止生成的条件
+PARAMETER stop "<|im_start|>"
+PARAMETER stop "<|im_end|>"
+
+# 生成参数
+PARAMETER temperature 0.7
+PARAMETER top_p 0.9
+PARAMETER top_k 40
+PARAMETER num_predict 1024

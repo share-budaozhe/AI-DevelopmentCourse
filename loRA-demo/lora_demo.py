@@ -66,7 +66,6 @@ from transformers import (
     HfArgumentParser,
     TrainingArguments,
     Trainer,
-    DataCollatorForSeq2Seq,
     BitsAndBytesConfig,
     GenerationConfig,
 )
@@ -305,7 +304,8 @@ def preprocess_function(
         return_tensors=None,
     )
 
-    labels = model_inputs["input_ids"].copy()
+    # 深拷贝：.copy() 只复制外层列表，内部列表必须逐一复制，否则会污染 input_ids
+    labels = [ids.copy() for ids in model_inputs["input_ids"]]
 
     # 将输入部分的标签设为 -100（不参与 loss 计算）
     for i, (label, prompt_ids) in enumerate(zip(labels, prompt_tokens["input_ids"])):
@@ -418,6 +418,19 @@ def load_model_and_tokenizer(
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
+    # 同步模型的 pad_token_id
+    model.config.pad_token_id = tokenizer.pad_token_id
+
+    # 检查并 resize embeddings（PEFT 包装后还会再确认一次）
+    model_vocab = model.get_input_embeddings().num_embeddings
+    tok_vocab = len(tokenizer)
+    if model_vocab != tok_vocab:
+        logger.warning(f"词表大小不匹配! 模型={model_vocab} vs tokenizer={tok_vocab}，正在 resize...")
+        model.resize_token_embeddings(tok_vocab)
+        logger.info(f"resize 完成: {model.get_input_embeddings().num_embeddings}")
+    else:
+        logger.info(f"词表大小一致: {tok_vocab}")
+
     # 为 kbit 训练准备模型
     if model_args.use_4bit:
         model = prepare_model_for_kbit_training(model)
@@ -525,9 +538,13 @@ def train(
         )) * training_config.num_epochs
     )
 
+    # 计算 warmup_steps（新 API 替代 warmup_ratio）
+    warmup_steps = int(total_steps * training_config.warmup_ratio)
+    # logging_dir 改为环境变量方式（新 API）
+    os.environ["TENSORBOARD_LOGGING_DIR"] = os.path.join(training_config.output_dir, "logs")
+
     training_args = TrainingArguments(
         output_dir=training_config.output_dir,
-        logging_dir=os.path.join(training_config.output_dir, "logs"),
 
         # 训练核心
         num_train_epochs=training_config.num_epochs,
@@ -536,7 +553,7 @@ def train(
         per_device_eval_batch_size=training_config.batch_size,
         gradient_accumulation_steps=training_config.gradient_accumulation_steps,
         learning_rate=training_config.learning_rate,
-        warmup_ratio=training_config.warmup_ratio,
+        warmup_steps=warmup_steps,
         lr_scheduler_type="cosine",
 
         # 精度与优化
@@ -568,23 +585,41 @@ def train(
         dataloader_pin_memory=False,
     )
 
-    # 数据整理器
-    data_collator = DataCollatorForSeq2Seq(
-        tokenizer=tokenizer,
-        model=model,
-        padding="longest",
-        pad_to_multiple_of=8,
-    )
+    # ── 安全检查：PEFT 包装后 embedding 大小确认 ──
+    model_vocab = model.get_input_embeddings().num_embeddings
+    tok_vocab = len(tokenizer)
+    logger.info(f"[训练前检查] embedding词表={model_vocab}, tokenizer词表={tok_vocab}")
+    if model_vocab != tok_vocab:
+        logger.warning(f"词表不匹配！resize {model_vocab} → {tok_vocab}")
+        model.resize_token_embeddings(tok_vocab)
 
-    # Trainer
+    # ── 简单 collator：按最长序列做 padding ──
+    def causal_lm_collator(features: list) -> dict:
+        """批次 padding collator — 对 input_ids/labels/attention_mask 做右侧 padding"""
+        max_len = max(len(f["input_ids"]) for f in features)
+        # 向上取整到 8 的倍数(gradient checkpointing 友好)
+        pad_len = ((max_len + 7) // 8) * 8
+        batch = {}
+        for key in ["input_ids", "attention_mask", "labels"]:
+            if key not in features[0]:
+                continue
+            pad_value = tokenizer.pad_token_id if key != "labels" else -100
+            padded = [
+                f[key] + [pad_value] * (pad_len - len(f[key]))
+                for f in features
+            ]
+            batch[key] = torch.tensor(padded, dtype=torch.long)
+        return batch
+
+    # Trainer（新版 transformers 不再在 __init__ 中接受 tokenizer）
     trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
-        tokenizer=tokenizer,
-        data_collator=data_collator,
+        data_collator=causal_lm_collator,
     )
+    trainer.tokenizer = tokenizer  # 创建后赋值
 
     # 开始训练
     train_result = trainer.train()
@@ -701,9 +736,19 @@ def evaluate_perplexity(
     total_loss = 0.0
     num_batches = 0
 
-    data_collator = DataCollatorForSeq2Seq(
-        tokenizer=tokenizer, model=model, padding="longest"
-    )
+    def collator(features):
+        max_len = max(len(f["input_ids"]) for f in features)
+        pad_len = ((max_len + 7) // 8) * 8
+        batch = {}
+        for key in ["input_ids", "attention_mask", "labels"]:
+            if key not in features[0]:
+                continue
+            pad_v = tokenizer.pad_token_id if key != "labels" else -100
+            batch[key] = torch.tensor(
+                [f[key] + [pad_v] * (pad_len - len(f[key])) for f in features],
+                dtype=torch.long,
+            )
+        return batch
 
     indices = torch.randperm(len(eval_data))[:max_samples]
     batch_size = 8
@@ -711,7 +756,7 @@ def evaluate_perplexity(
     with torch.no_grad():
         for i in range(0, len(indices), batch_size):
             batch_indices = indices[i:i+batch_size].tolist()
-            batch = data_collator([eval_data[j] for j in batch_indices])
+            batch = collator([eval_data[j] for j in batch_indices])
             batch = {k: v.to(model.device) for k, v in batch.items()}
 
             outputs = model(**batch)
