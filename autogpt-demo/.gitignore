@@ -1,0 +1,4 @@
+# Workspace 运行时产物
+workspace/checkpoint_*.json
+workspace/chroma_db/
+workspace/*.md
